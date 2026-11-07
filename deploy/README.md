@@ -73,5 +73,6 @@ argo logs -n ci @latest --follow
 ## Notes
 
 - The Dagger engine runs as a privileged DaemonSet; workflow steps reach it through the node socket at `/run/dagger-dagger-engine/engine.sock`. Its state lives on the node, so pnpm store and Turborepo cache volumes persist across runs, and identical work across parallel checks is deduplicated.
+- At most 4 checks run at once across all workflows (Argo semaphore in `argo/concurrency.yaml`); the rest queue. Every check is a session on the single engine, and 12 at once ran an 8 GB node out of memory. Raise it on a bigger node.
 - Bump the Dagger version in three places together: `dagger/values.yaml`, `argo/workflowtemplate.yaml`, and the `DAGGER_CHART_VERSION` in `bootstrap.sh`.
 - Teardown: `kind delete cluster --name dagger-argo`.

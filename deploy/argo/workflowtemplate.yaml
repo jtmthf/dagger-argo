@@ -45,6 +45,11 @@ spec:
       inputs:
         parameters:
           - name: check
+      synchronization:
+        semaphores: # queue beyond the cap in concurrency.yaml
+          - configMapKeyRef:
+              name: dagger-checks-concurrency
+              key: checks
       activeDeadlineSeconds: 3600
       retryStrategy:
         limit: 1

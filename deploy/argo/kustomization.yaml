@@ -4,6 +4,7 @@ namespace: ci
 resources:
   - namespace.yaml
   - rbac.yaml
+  - concurrency.yaml
   - workflowtemplate.yaml
   - eventbus.yaml
   - eventsource-github.yaml

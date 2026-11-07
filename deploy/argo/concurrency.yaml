@@ -1,0 +1,9 @@
+# Cluster-wide cap on concurrent Dagger checks across all workflows. Every check
+# is a session on the one node-local engine, so too many at once OOM the node.
+# Raise it on a bigger node.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dagger-checks-concurrency
+data:
+  checks: "4"
