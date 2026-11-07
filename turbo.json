@@ -27,6 +27,12 @@
     "test:watch": {
       "cache": false,
       "persistent": true
+    },
+    "e2e": {
+      "dependsOn": ["^build", "transit"],
+      "env": ["CI"],
+      "passThroughEnv": ["PLAYWRIGHT_*"],
+      "outputs": ["playwright-report/**", "test-results/**"]
     }
   }
 }

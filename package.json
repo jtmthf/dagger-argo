@@ -8,7 +8,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "test:watch": "turbo run test:watch"
+    "test:watch": "turbo run test:watch",
+    "e2e": "turbo run e2e",
+    "e2e:install": "pnpm --filter=@repo/playwright-web exec playwright install --with-deps"
   },
   "devDependencies": {
     "prettier": "3.9.6",
