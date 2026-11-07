@@ -1,0 +1,26 @@
+# NodePorts mapped to host ports by deploy/kind.yaml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: github-eventsource-nodeport
+spec:
+  type: NodePort
+  selector:
+    eventsource-name: github
+  ports:
+    - port: 12000
+      targetPort: 12000
+      nodePort: 30000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-eventsource-nodeport
+spec:
+  type: NodePort
+  selector:
+    eventsource-name: webhook
+  ports:
+    - port: 12001
+      targetPort: 12001
+      nodePort: 30001

@@ -160,6 +160,10 @@ dagger -m .dagger/modules/ci call turbo --tasks build,test --args=--force stdout
 
 `end-to-end` installs Playwright browsers (`pnpm e2e:install`) in its container. pnpm store and Turborepo's local cache persist across runs in Dagger cache volumes. After editing `.dagger/modules/ci/src/index.ts`, run `dagger generate -y` and commit the regenerated files.
 
+### Running CI on Argo
+
+`deploy/` runs the same checks on a local kind cluster with Argo Events (GitHub webhook or manual `curl`) triggering an Argo Workflow that runs one `dagger check` step per check. See [deploy/README.md](deploy/README.md).
+
 ## Useful Links
 
 Learn more about the power of Turborepo:

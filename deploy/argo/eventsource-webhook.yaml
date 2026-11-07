@@ -1,0 +1,11 @@
+# Manual trigger: POST /ci {"repo": "<clone url>", "revision": "<sha|ref>", "checks": "[...]"?}
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: webhook
+spec:
+  webhook:
+    ci:
+      endpoint: /ci
+      port: "12001"
+      method: POST

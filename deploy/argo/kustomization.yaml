@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ci
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - workflowtemplate.yaml
+  - eventbus.yaml
+  - eventsource-github.yaml
+  - eventsource-webhook.yaml
+  - services.yaml
+  - sensor.yaml

@@ -1,0 +1,81 @@
+# Runs each Dagger check (dagger.toml / .dagger/modules/ci) as its own DAG node.
+# All steps talk to the node-local Dagger engine from deploy/dagger, so they share
+# its cache (pnpm store, Turborepo cache) and deduplicate identical work.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: dagger-checks
+spec:
+  entrypoint: checks
+  serviceAccountName: ci-workflow
+  arguments:
+    parameters:
+      - name: repo
+        description: Git clone URL
+      - name: revision
+        description: Commit SHA or branch/tag to check out
+        value: main
+      - name: checks
+        description: JSON list of `dagger check` names (see `dagger check -l`)
+        value: '["lint","build","check-types","test","end-to-end","stale"]'
+  ttlStrategy:
+    secondsAfterSuccess: 86400
+    secondsAfterFailure: 259200
+  podGC:
+    strategy: OnWorkflowSuccess
+  volumes:
+    - name: dagger-run
+      hostPath:
+        path: /run/dagger-dagger-engine
+        type: Directory
+  templates:
+    - name: checks
+      dag:
+        failFast: false # always report every check
+        tasks:
+          - name: check
+            template: dagger-check
+            withParam: "{{workflow.parameters.checks}}"
+            arguments:
+              parameters:
+                - name: check
+                  value: "{{item}}"
+
+    - name: dagger-check
+      inputs:
+        parameters:
+          - name: check
+      activeDeadlineSeconds: 3600
+      retryStrategy:
+        limit: 1
+        retryPolicy: OnError # infra errors only; a failing check is not retried
+      container:
+        # Ships the dagger CLI and git; version must match the engine (deploy/dagger/values.yaml).
+        image: registry.dagger.io/engine:v1.0.0-beta.25
+        command: [sh, -euc]
+        args:
+          - |
+            git init -q /src && cd /src
+            git remote add origin "$REPO"
+            git fetch -q --depth 1 origin "$REVISION"
+            git checkout -q FETCH_HEAD
+            echo "checking $REPO@$(git rev-parse HEAD)"
+            exec dagger check --progress=plain --check="$CHECK"
+        env:
+          - name: REPO
+            value: "{{workflow.parameters.repo}}"
+          - name: REVISION
+            value: "{{workflow.parameters.revision}}"
+          - name: CHECK
+            value: "{{inputs.parameters.check}}"
+          - name: DAGGER_ENGINE
+            value: unix:///run/dagger/engine.sock
+          - name: DAGGER_NO_NAG
+            value: "1"
+        volumeMounts:
+          - name: dagger-run
+            mountPath: /run/dagger
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi

@@ -1,0 +1,125 @@
+# Turns GitHub push / pull_request events and manual webhook calls into
+# Workflows from the dagger-checks WorkflowTemplate.
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: ci
+spec:
+  template:
+    serviceAccountName: ci-sensor
+  dependencies:
+    - name: github-push
+      eventSourceName: github
+      eventName: repo
+      filters:
+        data:
+          - path: headers.X-Github-Event
+            type: string
+            value: [push]
+          - path: body.deleted # branch/tag deletion
+            type: bool
+            value: ["false"]
+    - name: github-pr
+      eventSourceName: github
+      eventName: repo
+      filters:
+        data:
+          - path: headers.X-Github-Event
+            type: string
+            value: [pull_request]
+          - path: body.action
+            type: string
+            value: [opened, synchronize, reopened]
+    - name: manual
+      eventSourceName: webhook
+      eventName: ci
+  triggers:
+    - template:
+        name: github-push
+        conditions: github-push
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: ci-
+              spec:
+                workflowTemplateRef:
+                  name: dagger-checks
+                arguments:
+                  parameters:
+                    - name: repo
+                    - name: revision
+          parameters:
+            - src:
+                dependencyName: github-push
+                dataKey: body.repository.clone_url
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: github-push
+                dataKey: body.after
+              dest: spec.arguments.parameters.1.value
+    - template:
+        name: github-pr
+        conditions: github-pr
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: ci-
+              spec:
+                workflowTemplateRef:
+                  name: dagger-checks
+                arguments:
+                  parameters:
+                    - name: repo
+                    - name: revision
+          parameters:
+            - src:
+                dependencyName: github-pr
+                dataKey: body.pull_request.head.repo.clone_url
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: github-pr
+                dataKey: body.pull_request.head.sha
+              dest: spec.arguments.parameters.1.value
+    - template:
+        name: manual
+        conditions: manual
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: ci-
+              spec:
+                workflowTemplateRef:
+                  name: dagger-checks
+                arguments:
+                  parameters:
+                    - name: repo
+                    - name: revision
+                    - name: checks
+          parameters:
+            - src:
+                dependencyName: manual
+                dataKey: body.repo
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: manual
+                dataKey: body.revision
+                value: main
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: manual
+                dataKey: body.checks
+                # keep in sync with the default in workflowtemplate.yaml
+                value: '["lint","build","check-types","test","end-to-end","stale"]'
+              dest: spec.arguments.parameters.2.value

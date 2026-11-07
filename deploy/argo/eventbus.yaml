@@ -1,0 +1,12 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventBus
+metadata:
+  name: default
+spec:
+  jetstream:
+    version: latest
+    replicas: 1
+    # Stream replicas default to 3, which a single-node JetStream rejects.
+    streamConfig: |
+      replicas: 1
+      maxAge: 72h

@@ -1,0 +1,14 @@
+# Single-node kind cluster for running CI locally.
+# Host ports: 2746 Argo UI, 12000 GitHub webhook, 12001 manual webhook.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: dagger-argo
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30746 # argo-server NodePort
+        hostPort: 2746
+      - containerPort: 30000 # github EventSource NodePort
+        hostPort: 12000
+      - containerPort: 30001 # manual webhook EventSource NodePort
+        hostPort: 12001

@@ -1,0 +1,56 @@
+# Workflow pods: the Argo executor only needs to report task results.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ci-workflow
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ci-workflow
+rules:
+  - apiGroups: [argoproj.io]
+    resources: [workflowtaskresults]
+    verbs: [create, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-workflow
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ci-workflow
+subjects:
+  - kind: ServiceAccount
+    name: ci-workflow
+---
+# Sensor: submits Workflows from the dagger-checks WorkflowTemplate.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ci-sensor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ci-sensor
+rules:
+  - apiGroups: [argoproj.io]
+    resources: [workflows]
+    verbs: [create, get, list, watch]
+  - apiGroups: [argoproj.io]
+    resources: [workflowtemplates]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ci-sensor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ci-sensor
+subjects:
+  - kind: ServiceAccount
+    name: ci-sensor

@@ -1,0 +1,15 @@
+# Values for oci://registry.dagger.io/dagger-helm (version pinned in bootstrap.sh).
+# The chart exposes the engine socket on each node at /run/dagger-<fullname>/engine.sock;
+# workflow steps mount that hostPath (see deploy/argo/workflowtemplate.yaml).
+fullnameOverride: dagger-engine
+engine:
+  kind: DaemonSet
+  image:
+    # Must match the CLI version used by workflow steps and locally (README).
+    ref: registry.dagger.io/engine:v1.0.0-beta.25
+  hostPath:
+    dataVolume:
+      enabled: true # /var/lib/dagger-dagger-engine: cache volumes survive engine restarts
+    runVolume:
+      enabled: true # /run/dagger-dagger-engine/engine.sock
+  terminationGracePeriodSeconds: 30

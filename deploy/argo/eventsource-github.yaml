@@ -1,0 +1,21 @@
+# GitHub push / pull_request webhooks, validated with the github-webhook-secret Secret.
+# Webhook-only mode: no API token; add the webhook in GitHub yourself (deploy/README.md).
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: github
+spec:
+  github:
+    repo:
+      repositories:
+        - owner: jtmthf
+          names: [dagger-argo]
+      webhook:
+        endpoint: /push
+        port: "12000"
+        method: POST
+      events: [push, pull_request]
+      webhookSecret:
+        name: github-webhook-secret
+        key: secret
+      contentType: json
