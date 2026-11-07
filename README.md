@@ -147,6 +147,19 @@ pnpm exec turbo link
 pnpm exec turbo link
 ```
 
+## CI with Dagger
+
+CI runs on [Dagger 1.0 beta](https://docs.dagger.io/) (`dagger.toml` workspace, module in `.dagger/modules/ci`). Every check delegates to `turbo run <task>`, so task graph and caching stay in `turbo.json`. Needs the Dagger CLI (`v1.0.0-beta.25`) and a Docker-compatible runtime.
+
+```sh
+dagger check                    # lint, build, check-types, test, end-to-end (+ SDK staleness)
+dagger check -l                 # list checks
+dagger check --ci --check=lint  # one check
+dagger -m .dagger/modules/ci call turbo --tasks build,test --args=--force stdout
+```
+
+`end-to-end` installs Playwright browsers (`pnpm e2e:install`) in its container. pnpm store and Turborepo's local cache persist across runs in Dagger cache volumes. After editing `.dagger/modules/ci/src/index.ts`, run `dagger generate -y` and commit the regenerated files.
+
 ## Useful Links
 
 Learn more about the power of Turborepo:
